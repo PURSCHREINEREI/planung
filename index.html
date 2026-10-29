@@ -88,7 +88,9 @@ main { padding-top: 14px; display: grid; gap: 14px; }
 .cell .n { font: 600 14px var(--font-display); }
 .cell .bars { display: grid; gap: 2px; }
 .cell .bars i { display: block; height: 5px; border-radius: 2px; background: var(--c); }
-.cell .more { font-size: 11px; color: var(--muted); }
+.cell .top { display: flex; justify-content: space-between; align-items: baseline; }
+.cell .cnt { font-size: 12px; font-weight: 600; color: var(--accent); }
+.back { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; height: 44px; padding: 0 14px; font-weight: 600; color: var(--accent); text-align: left; cursor: pointer; }
 
 .sheet-back { position: fixed; inset: 0; background: rgba(8, 12, 18, .55); z-index: 30; display: flex; align-items: flex-end; justify-content: center; }
 .sheet { background: var(--surface); width: 100%; max-width: 720px; max-height: 88%; overflow: auto; border-radius: 14px 14px 0 0; padding: 18px 18px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 14px; }
@@ -184,7 +186,9 @@ function fmtTime(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 /* ---------- state ---------- */
-const state = { view: 'week', cur: startOfDay(new Date()), row: 'all' };
+const state = { view: 'week', cur: startOfDay(new Date()), row: 'all', back: null };
+const VIEW_NAMES = { month: 'Monat', week: 'Woche', two: '2 Wochen' };
+function openDay(day, from) { state.back = from; state.view = 'day'; state.cur = day; renderBody(); window.scrollTo(0, 0); }
 try { const v = localStorage.getItem('pur-view'); if (['day', 'week', 'two', 'month'].includes(v)) state.view = v; const r = localStorage.getItem('pur-row'); if (r) state.row = r; } catch (e) {}
 
 function onDay(day) {
@@ -224,7 +228,7 @@ function dayBlock(day) {
   if (sameDay(day, new Date())) head.classList.add('is-today');
   head.append(el('span', 'd', cap(dayFmt.format(day))));
   if (day.getDay() === 1) head.append(el('span', 'kw', `KW ${isoWeek(day)}`));
-  head.addEventListener('click', () => { state.view = 'day'; state.cur = day; render(); });
+  head.addEventListener('click', () => openDay(day, state.view));
   wrap.append(head);
   const list = onDay(day);
   if (!list.length) { if (day.getDay() !== 0 && day.getDay() !== 6) wrap.append(el('div', 'empty', 'Keine Termine')); else return null; }
@@ -233,6 +237,12 @@ function dayBlock(day) {
 }
 
 function renderDay(main) {
+  if (state.back) {
+    const back = el('button', 'back', `‹ Zurück zur ${state.back === 'month' ? 'Monatsansicht' : state.back === 'week' ? 'Wochenansicht' : '2-Wochen-Ansicht'}`);
+    back.type = 'button';
+    back.addEventListener('click', () => { state.view = state.back; state.back = null; renderBody(); window.scrollTo(0, 0); });
+    main.append(back);
+  }
   const hd = el('div', 'day-head' + (sameDay(state.cur, new Date()) ? ' is-today' : ''));
   hd.append(el('span', 'd', cap(dayFmt.format(state.cur))), el('span', 'kw', `KW ${isoWeek(state.cur)}`));
   main.append(hd);
@@ -262,16 +272,17 @@ function renderMonth(main) {
     if (day.getMonth() !== first.getMonth()) c.classList.add('out');
     if (day.getDay() === 0 || day.getDay() === 6) c.classList.add('we');
     if (sameDay(day, new Date())) c.classList.add('is-today');
-    c.append(el('span', 'n', String(day.getDate())));
     const list = onDay(day);
+    const top = el('span', 'top'); top.append(el('span', 'n', String(day.getDate())));
+    if (list.length) top.append(el('span', 'cnt', String(list.length)));
+    c.append(top);
     if (list.length) {
       const bars = el('span', 'bars');
-      list.slice(0, 3).forEach(a => { const b = el('i'); b.style.setProperty('--c', catsById.get(a.category)?.color ?? 'var(--line)'); bars.append(b); });
+      list.slice(0, 4).forEach(a => { const b = el('i'); b.style.setProperty('--c', catsById.get(a.category)?.color ?? 'var(--line)'); bars.append(b); });
       c.append(bars);
-      if (list.length > 3) c.append(el('span', 'more', `+${list.length - 3}`));
     }
     c.setAttribute('aria-label', `${fmtDate(day)}, ${list.length} Termine`);
-    c.addEventListener('click', () => { state.view = 'day'; state.cur = day; render(); });
+    c.addEventListener('click', () => openDay(day, 'month'));
     grid.append(c);
   }
   main.append(grid);
@@ -346,7 +357,7 @@ function buildShell() {
   const stand = el('div', 'stand'); stand.id = 'stand'; brand.append(stand);
   const seg = el('div', 'seg'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Ansicht');
   [['day', 'Tag'], ['week', 'Woche'], ['two', '2 Wochen'], ['month', 'Monat']].forEach(([v, t]) => {
-    const b = el('button', null, t); b.type = 'button'; b.dataset.view = v; b.addEventListener('click', () => { state.view = v; renderBody(); }); seg.append(b);
+    const b = el('button', null, t); b.type = 'button'; b.dataset.view = v; b.addEventListener('click', () => { state.view = v; state.back = null; renderBody(); }); seg.append(b);
   });
   const nav = el('div', 'nav');
   const prev = el('button', null, '‹'); prev.type = 'button'; prev.setAttribute('aria-label', 'Zurück'); prev.addEventListener('click', () => step(-1));
