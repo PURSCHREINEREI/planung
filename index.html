@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1F3E6E">
+<title>PUR Arbeitsplanung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+:root {
+  --bg: #F2F4F7; --surface: #FFFFFF; --ink: #16202E; --muted: #5B697C; --line: #D8DEE6;
+  --accent: #1F3E6E; --on-accent: #FFFFFF; --weekend: #E9ECF1; --today: #DDEBFF; --error: #B3261E;
+  --font-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0F151D; --surface: #18212C; --ink: #E8EDF3; --muted: #93A1B3; --line: #2A3644;
+    --accent: #8DB4F2; --on-accent: #0F151D; --weekend: #141C26; --today: #1E3556; --error: #F2B8B5;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.35;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); }
+button, select, input { font: inherit; color: inherit; }
+.wrap { max-width: 720px; margin: 0 auto; }
+
+header.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); border-bottom: 1px solid var(--line);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+}
+.bar-inner { max-width: 720px; margin: 0 auto; display: grid; gap: 10px; }
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.brand h1 { margin: 0; font: 700 22px/1 var(--font-display); letter-spacing: .02em; color: var(--accent); white-space: nowrap; }
+.stand { font-size: 12px; color: var(--muted); text-align: right; }
+.stand.warn { color: var(--error); }
+
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 9px 4px; font: 600 15px var(--font-display); letter-spacing: .02em; cursor: pointer; color: var(--muted); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.nav { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; }
+.nav button { height: 44px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font-size: 22px; cursor: pointer; }
+.nav .range { text-align: center; font: 600 18px/1.15 var(--font-display); }
+.nav .range small { display: block; font: 400 12px var(--font-body); color: var(--muted); }
+.tools { display: flex; gap: 8px; }
+.tools select { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 0 10px; }
+.tools .today { height: 40px; padding: 0 16px; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 8px; font-weight: 600; cursor: pointer; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { padding-top: 14px; display: grid; gap: 14px; }
+.day { display: grid; gap: 8px; }
+.day-head { display: flex; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--weekend); border: 0; width: 100%; text-align: left; cursor: pointer; }
+.day-head.is-today { background: var(--today); }
+.day-head .d { font: 700 18px var(--font-display); }
+.day-head .kw { margin-left: auto; font-size: 12px; color: var(--muted); }
+.empty { color: var(--muted); font-size: 14px; padding: 2px 10px; }
+.group-title { display: flex; align-items: center; gap: 8px; font: 600 15px var(--font-display); letter-spacing: .03em; text-transform: uppercase; color: var(--muted); padding: 2px 2px 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+.card { display: grid; grid-template-columns: 6px 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; text-align: left; width: 100%; padding: 0; cursor: pointer; }
+.card .bar { background: var(--c, var(--line)); }
+.card .body { padding: 9px 12px; display: grid; gap: 2px; min-width: 0; }
+.card .t { font-weight: 600; overflow-wrap: anywhere; }
+.card .w { overflow-wrap: anywhere; }
+.card .m { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 13px; color: var(--muted); }
+.card .m span { display: inline-flex; align-items: center; gap: 6px; }
+.tag { font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; }
+
+.month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.month .dow { text-align: center; font-size: 12px; color: var(--muted); padding: 2px 0; }
+.cell { min-height: 68px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 4px; display: grid; align-content: start; gap: 3px; text-align: left; cursor: pointer; }
+.cell.we { background: var(--weekend); }
+.cell.out { opacity: .45; }
+.cell.is-today { background: var(--today); border-color: var(--accent); }
+.cell .n { font: 600 14px var(--font-display); }
+.cell .bars { display: grid; gap: 2px; }
+.cell .bars i { display: block; height: 5px; border-radius: 2px; background: var(--c); }
+.cell .more { font-size: 11px; color: var(--muted); }
+
+.sheet-back { position: fixed; inset: 0; background: rgba(8, 12, 18, .55); z-index: 30; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); width: 100%; max-width: 720px; max-height: 88%; overflow: auto; border-radius: 14px 14px 0 0; padding: 18px 18px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 14px; }
+.sheet-head { display: flex; align-items: flex-start; gap: 12px; }
+.sheet h2 { margin: 0; font: 700 24px/1.1 var(--font-display); overflow-wrap: anywhere; flex: 1; }
+.sheet .close { border: 1px solid var(--line); background: transparent; border-radius: 8px; width: 40px; height: 40px; font-size: 20px; cursor: pointer; flex: none; }
+.sheet dl { margin: 0; display: grid; grid-template-columns: 92px 1fr; gap: 10px 12px; }
+.sheet dt { color: var(--muted); font-size: 14px; padding-top: 1px; }
+.sheet dd { margin: 0; overflow-wrap: anywhere; }
+.sheet .notes { white-space: pre-wrap; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+.login { min-height: 100vh; display: grid; place-items: center; }
+.login form { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; width: min(100%, 380px); display: grid; gap: 12px; }
+.login h1 { margin: 0; font: 700 26px/1 var(--font-display); color: var(--accent); letter-spacing: .02em; }
+.login p { margin: 0; color: var(--muted); font-size: 14px; }
+.login input { height: 46px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 0 12px; width: 100%; }
+.login button { height: 46px; border: 0; border-radius: 8px; background: var(--accent); color: var(--on-accent); font: 600 17px var(--font-display); letter-spacing: .03em; cursor: pointer; }
+.login .err { color: var(--error); font-size: 14px; min-height: 1.2em; }
+.logout { background: none; border: 0; color: var(--muted); font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; }
+.foot { text-align: center; margin-top: 8px; }
+@media (prefers-reduced-motion: no-preference) { .sheet { animation: up .18s ease-out; } @keyframes up { from { transform: translateY(24px); opacity: .6; } } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const DATA_URL = 'daten.enc.json';
+const POLL_MS = 30000;
+const STORE_KEY = 'pur-key';
+
+const app = document.getElementById('app');
+const pad = n => String(n).padStart(2, '0');
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const b64e = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
+function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+
+/* ---------- crypto ---------- */
+async function deriveKey(pass, saltB64, iter) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64d(saltB64), iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
+}
+async function decrypt(env, key) {
+  const buf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(env.iv) }, key, b64d(env.ct));
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+function loadStoredKey(env) {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (!s || s.salt !== env.salt) return null;
+    return crypto.subtle.importKey('raw', b64d(s.key), 'AES-GCM', false, ['decrypt']);
+  } catch (e) { return null; }
+}
+async function storeKey(key, salt) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ salt, key: b64e(await crypto.subtle.exportKey('raw', key)) })); } catch (e) {}
+}
+function forgetKey() { try { localStorage.removeItem(STORE_KEY); } catch (e) {} }
+
+/* ---------- data ---------- */
+let rowsById, catsById, rowOrder, appts = [], generated = '', lastHash = '', lastCheck = null, offline = false, cryptoKey = null;
+
+function parseIso(s) { const [d, t] = s.split('T'); const [y, m, dd] = d.split('-').map(Number); const [h, mi] = t.split(':').map(Number); return new Date(y, m - 1, dd, h, mi); }
+function applyData(payload) {
+  const d = payload.data;
+  generated = payload.generated;
+  rowsById = new Map(d.rows.map(r => [r.id, r]));
+  catsById = new Map(d.categories.map(c => [c.id, c]));
+  rowOrder = new Map(d.rows.map((r, i) => [r.id, i]));
+  appts = d.appointments.filter(a => rowsById.has(a.row)).map(a => ({ ...a, s: parseIso(a.start), e: parseIso(a.end) }))
+    .sort((a, b) => rowOrder.get(a.row) - rowOrder.get(b.row) || a.s - b.s);
+  if (state.row !== 'all' && !rowsById.has(state.row)) state.row = 'all';
+}
+
+async function fetchEnvelope() {
+  const r = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+  if (r.status === 404) throw new Error('Noch keine Daten veröffentlicht.');
+  if (!r.ok) throw new Error('Server-Fehler ' + r.status);
+  return r.json();
+}
+
+/* ---------- date helpers ---------- */
+const dayFmt = new Intl.DateTimeFormat('de-CH', { weekday: 'long', day: 'numeric', month: 'long' });
+const dayShort = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: 'numeric', month: 'short' });
+const monthFmt = new Intl.DateTimeFormat('de-CH', { month: 'long', year: 'numeric' });
+function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function mondayOf(d) { const x = startOfDay(d); return addDays(x, -((x.getDay() + 6) % 7)); }
+function isoWeek(d) { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7); }
+function fmtDate(d) { return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`; }
+function fmtTime(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+/* ---------- state ---------- */
+const state = { view: 'week', cur: startOfDay(new Date()), row: 'all' };
+try { const v = localStorage.getItem('pur-view'); if (['day', 'week', 'two', 'month'].includes(v)) state.view = v; const r = localStorage.getItem('pur-row'); if (r) state.row = r; } catch (e) {}
+
+function onDay(day) {
+  const next = addDays(day, 1);
+  return appts.filter(a => (state.row === 'all' || a.row === state.row) && a.s < next && a.e >= day);
+}
+function titleOf(a) { return a.customer || a.work || (catsById.get(a.category)?.name ?? 'Termin'); }
+function timeText(a, day) {
+  const first = sameDay(a.s, day), last = sameDay(a.e, day);
+  if (first && last) return `${fmtTime(a.s)}–${fmtTime(a.e)}`;
+  if (first) return `ab ${fmtTime(a.s)}`;
+  if (last) return `bis ${fmtTime(a.e)}`;
+  return 'ganztägig';
+}
+
+/* ---------- views ---------- */
+function card(a, day, showRow) {
+  const b = el('button', 'card'); b.type = 'button';
+  b.style.setProperty('--c', catsById.get(a.category)?.color ?? 'var(--line)');
+  b.append(el('span', 'bar'));
+  const body = el('span', 'body');
+  body.append(el('span', 't', titleOf(a)));
+  if (a.customer && a.work) body.append(el('span', 'w', a.work));
+  const m = el('span', 'm');
+  m.append(el('span', null, timeText(a, day)));
+  if (showRow) { const r = el('span'); const d = el('i', 'dot'); d.style.background = rowsById.get(a.row).color; r.append(d, rowsById.get(a.row).name); m.append(r); }
+  if (!sameDay(a.s, a.e)) m.append(el('span', 'tag', `${dayShort.format(a.s)} – ${dayShort.format(a.e)}`));
+  if (a.fixed) m.append(el('span', 'tag', 'fixiert'));
+  body.append(m); b.append(body);
+  b.addEventListener('click', () => openSheet(a));
+  return b;
+}
+
+function dayBlock(day) {
+  const wrap = el('section', 'day');
+  const head = el('button', 'day-head'); head.type = 'button';
+  if (sameDay(day, new Date())) head.classList.add('is-today');
+  head.append(el('span', 'd', cap(dayFmt.format(day))));
+  if (day.getDay() === 1) head.append(el('span', 'kw', `KW ${isoWeek(day)}`));
+  head.addEventListener('click', () => { state.view = 'day'; state.cur = day; render(); });
+  wrap.append(head);
+  const list = onDay(day);
+  if (!list.length) { if (day.getDay() !== 0 && day.getDay() !== 6) wrap.append(el('div', 'empty', 'Keine Termine')); else return null; }
+  list.forEach(a => wrap.append(card(a, day, true)));
+  return wrap;
+}
+
+function renderDay(main) {
+  const hd = el('div', 'day-head' + (sameDay(state.cur, new Date()) ? ' is-today' : ''));
+  hd.append(el('span', 'd', cap(dayFmt.format(state.cur))), el('span', 'kw', `KW ${isoWeek(state.cur)}`));
+  main.append(hd);
+  const list = onDay(state.cur);
+  if (!list.length) { main.append(el('div', 'empty', 'Keine Termine an diesem Tag.')); return; }
+  const groups = new Map();
+  list.forEach(a => { if (!groups.has(a.row)) groups.set(a.row, []); groups.get(a.row).push(a); });
+  groups.forEach((items, rid) => {
+    const g = el('section', 'day');
+    const t = el('div', 'group-title'); const d = el('i', 'dot'); d.style.background = rowsById.get(rid).color;
+    t.append(d, rowsById.get(rid).name); g.append(t);
+    items.forEach(a => g.append(card(a, state.cur, false)));
+    main.append(g);
+  });
+}
+
+function renderMonth(main) {
+  const first = new Date(state.cur.getFullYear(), state.cur.getMonth(), 1);
+  const gridStart = mondayOf(first);
+  const last = new Date(state.cur.getFullYear(), state.cur.getMonth() + 1, 0);
+  const weeks = Math.round(((mondayOf(last) - gridStart) / 864e5 + 7) / 7);
+  const grid = el('div', 'month');
+  ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].forEach(n => grid.append(el('div', 'dow', n)));
+  for (let i = 0; i < weeks * 7; i++) {
+    const day = addDays(gridStart, i);
+    const c = el('button', 'cell'); c.type = 'button';
+    if (day.getMonth() !== first.getMonth()) c.classList.add('out');
+    if (day.getDay() === 0 || day.getDay() === 6) c.classList.add('we');
+    if (sameDay(day, new Date())) c.classList.add('is-today');
+    c.append(el('span', 'n', String(day.getDate())));
+    const list = onDay(day);
+    if (list.length) {
+      const bars = el('span', 'bars');
+      list.slice(0, 3).forEach(a => { const b = el('i'); b.style.setProperty('--c', catsById.get(a.category)?.color ?? 'var(--line)'); bars.append(b); });
+      c.append(bars);
+      if (list.length > 3) c.append(el('span', 'more', `+${list.length - 3}`));
+    }
+    c.setAttribute('aria-label', `${fmtDate(day)}, ${list.length} Termine`);
+    c.addEventListener('click', () => { state.view = 'day'; state.cur = day; render(); });
+    grid.append(c);
+  }
+  main.append(grid);
+}
+
+function rangeLabel() {
+  const c = state.cur;
+  if (state.view === 'day') return [cap(dayFmt.format(c)), `KW ${isoWeek(c)}`];
+  if (state.view === 'week') { const m = mondayOf(c); return [`KW ${isoWeek(m)}`, `${fmtDate(m)} – ${fmtDate(addDays(m, 6))}`]; }
+  if (state.view === 'two') { const m = mondayOf(c); return [`KW ${isoWeek(m)}–${isoWeek(addDays(m, 7))}`, `${fmtDate(m)} – ${fmtDate(addDays(m, 13))}`]; }
+  return [cap(monthFmt.format(c)), ''];
+}
+
+function step(dir) {
+  const c = state.cur;
+  if (state.view === 'day') state.cur = addDays(c, dir);
+  else if (state.view === 'week') state.cur = addDays(c, 7 * dir);
+  else if (state.view === 'two') state.cur = addDays(c, 14 * dir);
+  else state.cur = new Date(c.getFullYear(), c.getMonth() + dir, 1);
+  renderBody(); window.scrollTo(0, 0);
+}
+
+function openSheet(a) {
+  const host = document.getElementById('sheetHost'); host.replaceChildren();
+  const back = el('div', 'sheet-back'); const sheet = el('div', 'sheet');
+  const close = () => { host.replaceChildren(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  const head = el('div', 'sheet-head'); head.append(el('h2', null, titleOf(a)));
+  const x = el('button', 'close', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Schliessen'); x.addEventListener('click', close); head.append(x);
+  const dl = el('dl');
+  const add = (k, v) => { if (v == null || v === '') return; dl.append(el('dt', null, k)); const dd = el('dd'); if (v instanceof Node) dd.append(v); else dd.textContent = v; dl.append(dd); };
+  if (a.customer && a.work) add('Arbeit', a.work);
+  const r = rowsById.get(a.row); const rn = el('span'); const rd = el('i', 'dot'); rd.style.cssText = `display:inline-block;margin-right:6px;background:${r.color}`; rn.append(rd, r.name); add('Zeile', rn);
+  const cat = catsById.get(a.category); if (cat) { const cs = el('span'); const sw = el('i', 'swatch'); sw.style.background = cat.color; cs.append(sw, cat.name); add('Kategorie', cs); }
+  add('Datum', sameDay(a.s, a.e) ? fmtDate(a.s) : `${fmtDate(a.s)} – ${fmtDate(a.e)}`);
+  add('Zeit', `${fmtTime(a.s)} – ${fmtTime(a.e)}`);
+  if (a.notes) add('Beschrieb', el('div', 'notes', a.notes));
+  if (a.fixed) add('Status', 'Termin fixiert');
+  if (a.series) add('Serie', 'Teil einer Terminserie');
+  sheet.append(head, dl); back.append(sheet);
+  back.addEventListener('click', e => { if (e.target === back) close(); });
+  host.append(back); document.addEventListener('keydown', onKey);
+}
+
+/* ---------- shell ---------- */
+function renderBody() {
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === state.view)));
+  const [a, b] = rangeLabel();
+  const range = document.getElementById('range'); range.textContent = a; if (b) range.append(el('small', null, b));
+  const main = document.getElementById('main'); main.replaceChildren();
+  if (state.view === 'day') renderDay(main);
+  else if (state.view === 'week') { const m = mondayOf(state.cur); for (let i = 0; i < 7; i++) { const x = dayBlock(addDays(m, i)); if (x) main.append(x); } }
+  else if (state.view === 'two') { const m = mondayOf(state.cur); for (let i = 0; i < 14; i++) { const x = dayBlock(addDays(m, i)); if (x) main.append(x); } }
+  else renderMonth(main);
+  try { localStorage.setItem('pur-view', state.view); localStorage.setItem('pur-row', state.row); } catch (e) {}
+  updateStand();
+}
+
+function updateStand() {
+  const s = document.getElementById('stand'); if (!s) return;
+  const g = parseIso(generated);
+  s.classList.toggle('warn', offline);
+  const when = sameDay(g, new Date()) ? fmtTime(g) : `${pad(g.getDate())}.${pad(g.getMonth() + 1)}. ${fmtTime(g)}`;
+  s.textContent = offline ? `Offline · Stand ${when}` : `Stand ${when} · geprüft ${fmtTime(lastCheck || new Date())}`;
+}
+
+function buildShell() {
+  app.replaceChildren();
+  const wrap = el('div', 'wrap');
+  const header = el('header', 'bar'); const inner = el('div', 'bar-inner');
+  const brand = el('div', 'brand'); brand.append(el('h1', null, 'PUR Arbeitsplanung'));
+  const stand = el('div', 'stand'); stand.id = 'stand'; brand.append(stand);
+  const seg = el('div', 'seg'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Ansicht');
+  [['day', 'Tag'], ['week', 'Woche'], ['two', '2 Wochen'], ['month', 'Monat']].forEach(([v, t]) => {
+    const b = el('button', null, t); b.type = 'button'; b.dataset.view = v; b.addEventListener('click', () => { state.view = v; renderBody(); }); seg.append(b);
+  });
+  const nav = el('div', 'nav');
+  const prev = el('button', null, '‹'); prev.type = 'button'; prev.setAttribute('aria-label', 'Zurück'); prev.addEventListener('click', () => step(-1));
+  const range = el('div', 'range'); range.id = 'range';
+  const next = el('button', null, '›'); next.type = 'button'; next.setAttribute('aria-label', 'Weiter'); next.addEventListener('click', () => step(1));
+  nav.append(prev, range, next);
+  const tools = el('div', 'tools');
+  const sel = el('select'); sel.setAttribute('aria-label', 'Zeile filtern'); sel.id = 'rowFilter';
+  const fill = () => { sel.replaceChildren(new Option('Alle Zeilen', 'all')); [...rowsById.values()].sort((a, b) => a.order - b.order).forEach(r => sel.append(new Option(r.name, r.id))); sel.value = state.row; };
+  fill(); sel.addEventListener('change', () => { state.row = sel.value; renderBody(); });
+  const today = el('button', 'today', 'Heute'); today.type = 'button'; today.addEventListener('click', () => { state.cur = startOfDay(new Date()); renderBody(); window.scrollTo(0, 0); });
+  tools.append(sel, today);
+  inner.append(brand, seg, nav, tools); header.append(inner);
+  const main = el('main'); main.id = 'main'; main.setAttribute('aria-live', 'polite');
+  const foot = el('div', 'foot'); const out = el('button', 'logout', 'Abmelden'); out.type = 'button'; out.addEventListener('click', () => { forgetKey(); location.reload(); }); foot.append(out);
+  wrap.append(header, main, foot);
+  const host = el('div'); host.id = 'sheetHost';
+  app.append(wrap, host);
+  let tx = 0, ty = 0;
+  main.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  main.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; if (Math.abs(dx) > 70 && Math.abs(dy) < 45) step(dx < 0 ? 1 : -1); }, { passive: true });
+  renderBody();
+}
+
+function showLogin(env, message) {
+  app.replaceChildren();
+  const box = el('div', 'login'); const form = el('form');
+  form.append(el('h1', null, 'PUR Arbeitsplanung'), el('p', null, 'Bitte das Passwort eingeben (wird auf diesem Gerät gespeichert).'));
+  const input = el('input'); input.type = 'password'; input.autocomplete = 'current-password'; input.placeholder = 'Passwort'; input.id = 'pw';
+  const err = el('div', 'err', message || '');
+  const btn = el('button', null, 'Öffnen'); btn.type = 'submit';
+  form.append(input, err, btn); box.append(form); app.append(box);
+  form.addEventListener('submit', async e => {
+    e.preventDefault(); btn.disabled = true; err.textContent = 'Prüfe …';
+    try {
+      const key = await deriveKey(input.value, env.salt, env.iter);
+      const payload = await decrypt(env, key);
+      await storeKey(key, env.salt);
+      cryptoKey = await loadStoredKey(env) || key;
+      lastHash = env.h; applyData(payload); lastCheck = new Date(); buildShell(); schedule();
+    } catch (ex) { err.textContent = 'Passwort falsch.'; btn.disabled = false; }
+  });
+  input.focus();
+}
+
+/* ---------- live refresh ---------- */
+let timer = null;
+function schedule() { clearInterval(timer); timer = setInterval(refresh, POLL_MS); }
+async function refresh() {
+  if (document.hidden || !cryptoKey) return;
+  try {
+    const env = await fetchEnvelope();
+    offline = false; lastCheck = new Date();
+    if (env.h !== lastHash) {
+      applyData(await decrypt(env, cryptoKey)); lastHash = env.h;
+      const sel = document.getElementById('rowFilter');
+      if (sel) { const keep = state.row; sel.replaceChildren(new Option('Alle Zeilen', 'all')); [...rowsById.values()].sort((a, b) => a.order - b.order).forEach(r => sel.append(new Option(r.name, r.id))); state.row = rowsById.has(keep) ? keep : 'all'; sel.value = state.row; }
+      renderBody();
+    } else updateStand();
+  } catch (e) {
+    if (e.name === 'OperationError') { forgetKey(); location.reload(); return; }
+    offline = true; updateStand();
+  }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+
+(async function start() {
+  try {
+    const env = await fetchEnvelope();
+    const stored = await loadStoredKey(env);
+    if (stored) {
+      try { applyData(await decrypt(env, stored)); cryptoKey = stored; lastHash = env.h; lastCheck = new Date(); buildShell(); schedule(); return; }
+      catch (e) { forgetKey(); }
+    }
+    showLogin(env);
+  } catch (e) {
+    app.replaceChildren(); const box = el('div', 'login'); const f = el('form');
+    f.append(el('h1', null, 'PUR Arbeitsplanung'), el('p', null, e.message || 'Daten konnten nicht geladen werden.'));
+    const b = el('button', null, 'Erneut versuchen'); b.type = 'button'; b.addEventListener('click', () => location.reload()); f.append(b); box.append(f); app.append(box);
+  }
+})();
+</script>
+</body>
+</html>
